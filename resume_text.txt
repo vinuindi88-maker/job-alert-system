@@ -1,0 +1,49 @@
+VINAYAK INDI 
+Aspiring Data Analyst 
+Bangalore, Karnataka | +919359286834  | vinuindi88@gmail.com | Vinayak Indi | LinkedIn | GitHub Dashboard 
+PROFESSIONAL SUMMARY 
+Recent BCA (Data Science) graduate with hands -on project experience transforming raw business data into decision -ready insights 
+using SQL, Python, and Power BI. Strong analytical and critical -thinking skills demonstrated through end -to-end analytics projec ts 
+involving customer segmentation, revenue analysis, pricing strategy, and operational performance. Skilled across the complete  
+analytics workflow, including data cleaning, exploratory data analysis, SQL querying, dashboard development, and translating insights 
+into clear, business-focused recommendations for stakeholders. 
+EDUCATION 
+BCA (Data Science) | CMR University | Graduated: 2026 
+TECHNICAL SKILLS 
+SQL & Databases: MySQL, joins (inner/left), subqueries (correlated and non -correlated), GROUP BY / HAVING, CASE statements, 
+conditional aggregation, data cleaning with regular expressions 
+Python & Data Analysis: Pandas, NumPy, data wrangling, exploratory data analysis (EDA), outlier detection (IQR method), feature 
+selection 
+Data Visualization & BI: Power BI (interactive dashboards, KPI cards, filters and slicers), Matplotlib 
+Core Competencies: Business problem -solving, KPI and trend analysis, root cause analysis, data -driven decision support, business 
+communication, critical thinking 
+Tools & Platforms: Jupyter Notebook, VS Code, Git, GitHub 
+Productivity Tools: Google Workspace ( Gmail, Chrome), Microsoft Excel (Pivot Tables, XLOOKUP, Charts, Data Cleaning) 
+PROJECTS 
+Bike Store SQL Business Analysis                                                                                May 2026 – Jun 2026 
+SQL Analytics Project | MySQL 
+GitHub: https://github.com/vinuindi88-maker/bike-store-SQL-project 
+• Queried a 10-table relational retail database using multi -table joins, correlated and non -correlated subqueries, and CASE -based 
+conditional aggregation to solve six real -world business questions spanning sales performance, customer behavior, and store 
+operations. 
+• Built a year -over-year revenue comparison (2016 –2018) across stores using optimized joins and conditional aggregation (SUM 
+with CASE), giving leadership a clear, side-by-side view for executive reporting. 
+• Designed a customer segmentation query classifying customers into VIP, Frequent, and Standard tiers by net lifetime spend, 
+providing data-driven support for a proposed loyalty rewards program. 
+• Developed a fulfillment efficiency report using conditional COUNT logic to compare on -time versus late shipments by store, 
+pinpointing operational bottlenecks for the supply chain team. 
+Supply Chain Analytics: Pricing & Profitability Analysis                                                                              May 2026 – Jul 2026 
+Python, Pandas, NumPy, Matplotlib, Power BI 
+GitHub: https://github.com/vinuindi88-maker/Supply_Chain_Analytics 
+• Analyzed 180,519 supply chain transactions from the DataCo dataset using Python and Pandas to quantify how discounting affects 
+sales volume and profitability, informing pricing strategy. 
+• Cleaned and engineered the dataset, narrowing 53 raw features to 18 business-relevant variables and applying IQR-based outlier 
+detection to strengthen data quality ahead of analysis. 
+• Conducted exploratory data analysis revealing a strong negative relationship between discount rate and profit margin, with on ly 
+a minimal effect on units sold — a key insight for discount policy. 
+• Built an interactive Power BI dashboard with KPI cards and drill-down filters across sales, profit, discount, and geography, enabling 
+self-service reporting for business stakeholders. 
+CERTIFICATIONS 
+• Oracle Cloud Infrastructure AI Foundations Associate (Oracle) 
+• Machine Learning with Python (Udemy) 
+ 

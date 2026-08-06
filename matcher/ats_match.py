@@ -18,6 +18,7 @@ RESUME_PATH = os.path.join(
     "resume",
     "Vinayak_Indi.pdf"
 )
+RESUME_TEXT_PATH = "resume_text.txt"
 
 # User requirement: DO NOT lower this.
 MIN_MATCH_SCORE = 80
@@ -318,6 +319,45 @@ def extract_resume_text(
     resume_path=RESUME_PATH
 ):
 
+    # GitHub Actions / cloud
+    # Prefer pre-extracted resume text.
+    resume_text_path = "resume_text.txt"
+
+    if os.path.exists(resume_text_path):
+
+        absolute_text_path = os.path.abspath(
+            resume_text_path
+        )
+
+        if absolute_text_path in _RESUME_TEXT_CACHE:
+
+            return _RESUME_TEXT_CACHE[
+                absolute_text_path
+            ]
+
+        with open(
+            absolute_text_path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            resume_text = file.read()
+
+        if not resume_text.strip():
+
+            raise ValueError(
+                "resume_text.txt is empty."
+            )
+
+        _RESUME_TEXT_CACHE[
+            absolute_text_path
+        ] = resume_text
+
+        return resume_text
+
+    # Local fallback:
+    # Use original PDF if resume_text.txt
+    # is unavailable.
     absolute_path = os.path.abspath(
         resume_path
     )
@@ -333,7 +373,9 @@ def extract_resume_text(
     ):
 
         raise FileNotFoundError(
-            f"Resume not found: {absolute_path}"
+            "Resume not found. Expected "
+            "resume_text.txt or "
+            f"{absolute_path}"
         )
 
     reader = PdfReader(

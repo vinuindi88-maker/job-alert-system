@@ -1,0 +1,60 @@
+name: Hourly Job Alert
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hourly-job-alert
+  cancel-in-progress: false
+
+jobs:
+  run-job-alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run job alert system
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: python main.py
+
+      - name: Save updated job database
+        if: always()
+        run: |
+          if [ -f database/jobs.db ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            git add -f database/jobs.db
+
+            if ! git diff --cached --quiet; then
+              git commit -m "Update processed jobs database"
+              git push
+            else
+              echo "No database changes to save."
+            fi
+          else
+            echo "database/jobs.db not found."
+          fi

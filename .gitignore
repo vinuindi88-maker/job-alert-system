@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Gmail / API credentials
+credentials.json
+token.json
+client_secret*.json
+*credentials*.json
+*secret*.json
+
+# Database
+database/*.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Resume / personal files
+resume/*.pdf
+*.pdf
+
+# Logs
+*.log
+logs/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backups
+*_backup.py
+*.bak

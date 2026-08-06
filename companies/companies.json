@@ -1,0 +1,74 @@
+{
+  "companies": [
+    {
+      "name": "Kyndryl",
+      "ats": "workday",
+      "base_url": "https://kyndryl.wd5.myworkdayjobs.com",
+      "tenant": "kyndryl",
+      "site_name": "KyndrylProfessionalCareers",
+      "enabled": true
+    },
+    {
+      "name": "Sagility",
+      "ats": "workday",
+      "base_url": "https://sagility.wd1.myworkdayjobs.com",
+      "tenant": "sagility",
+      "site_name": "Sagility_Careers_IND",
+      "enabled": true
+    },
+    {
+      "name": "DXC Technology",
+      "ats": "workday",
+      "base_url": "https://dxctechnology.wd1.myworkdayjobs.com",
+      "tenant": "dxctechnology",
+      "site_name": "DXCJobs",
+      "enabled": true
+    },
+    {
+      "name": "Genpact",
+      "ats": "workday",
+      "base_url": "https://genpact.wd108.myworkdayjobs.com",
+      "tenant": "genpact",
+      "site_name": "External_Careers",
+      "enabled": true
+    },
+    {
+      "name": "Guidehouse",
+      "ats": "workday",
+      "base_url": "https://guidehouse.wd1.myworkdayjobs.com",
+      "tenant": "guidehouse",
+      "site_name": "External",
+      "enabled": true
+    },
+    {
+      "name": "Nium",
+      "ats": "lever",
+      "company_slug": "nium",
+      "enabled": true
+    },
+    {
+      "name": "Hevo Data",
+      "ats": "lever",
+      "company_slug": "hevodata",
+      "enabled": true
+    },
+    {
+      "name": "Brillio",
+      "ats": "lever",
+      "company_slug": "brillio-2",
+      "enabled": true
+    },
+    {
+      "name": "Dun & Bradstreet",
+      "ats": "lever",
+      "company_slug": "dnb",
+      "enabled": true
+    },
+    {
+      "name": "Maneuver Marketing",
+      "ats": "ashby",
+      "board_name": "maneuver-marketing",
+      "enabled": true
+    }
+  ]
+}

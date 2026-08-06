@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+lxml
+pypdf
+scikit-learn
+python-dotenv

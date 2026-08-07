@@ -1,12 +1,15 @@
 # ============================================================
-# JOB ALERT SYSTEM - STRICT FRESH JOB FILTER
+# JOB ALERT SYSTEM - FINAL STRICT FRESHER FILTER
 #
-# RULES:
-# 1. Target Data / Analytics roles only
-# 2. India locations only
-# 3. Senior roles rejected
-# 4. Jobs must be within LAST 48 HOURS
-# 5. Missing / invalid dates are rejected
+# PURPOSE:
+# - India jobs only
+# - Posted within last 48 hours only
+# - Data / Analytics target roles only
+# - Reject obvious unrelated roles
+# - Reject senior / lead / management / higher-level roles
+#
+# IMPORTANT:
+# Experience (0-2 years) is checked later from FULL JD.
 # ============================================================
 
 import re
@@ -26,118 +29,178 @@ MAX_JOB_AGE_HOURS = 48
 
 RELEVANT_ROLE_KEYWORDS = [
 
-    # Data Analyst
+    # ---------------- DATA ANALYTICS ----------------
     "data analyst",
     "data analytics",
     "data associate",
-
-    # Analytics
     "analytics analyst",
     "analytics associate",
 
-    # Business Intelligence
+    # ---------------- BUSINESS ANALYTICS ----------------
+    "business analyst",
+    "business analytics",
+
+    # ---------------- BUSINESS INTELLIGENCE ----------------
     "business intelligence",
     "bi analyst",
     "bi developer",
     "power bi",
 
-    # Business Analyst
-    "business analyst",
-    "business analytics",
-
-    # Reporting / MIS
+    # ---------------- REPORTING / MIS ----------------
     "reporting analyst",
     "reporting associate",
     "mis analyst",
     "mis executive",
     "mis reporting",
 
-    # Insights
+    # ---------------- INSIGHTS ----------------
     "insights analyst",
     "insight analyst",
     "insights associate",
 
-    # Data Engineering
+    # ---------------- DATA ENGINEERING ----------------
     "data engineer",
     "data engineering",
 
-    # Data Science / ML
+    # ---------------- DATA SCIENCE ----------------
     "data scientist",
     "data science",
+
+    # ---------------- MACHINE LEARNING / AI ----------------
     "machine learning engineer",
     "ml engineer",
     "ai analyst",
 
-    # SQL / Database
+    # ---------------- SQL / DATABASE ----------------
     "sql analyst",
     "database analyst",
 
-    # Operations Analytics
-    "operations analyst",
-    "data operations",
-    "analytics operations",
-
-    # Product / Marketing
+    # ---------------- PRODUCT ANALYTICS ----------------
     "product analyst",
+
+    # ---------------- MARKETING / GROWTH ANALYTICS ----------------
     "marketing analyst",
     "growth analyst",
 
-    # Finance / Risk
-    "financial analyst",
-    "finance analyst",
-    "risk analyst",
+    # ---------------- FRAUD ANALYTICS ----------------
     "fraud analyst",
-    "credit analyst",
 
-    # Supply Chain
+    # ---------------- SUPPLY CHAIN ANALYTICS ----------------
     "supply chain analyst",
     "logistics analyst",
     "inventory analyst",
     "procurement analyst",
 
-    # Other Analyst Roles
+    # ---------------- PERFORMANCE / DECISION ----------------
     "performance analyst",
-    "strategy analyst",
-    "research analyst",
     "decision support",
 ]
 
 
 # ============================================================
-# SENIOR ROLE KEYWORDS
+# SENIOR / NON-FRESHER TITLE KEYWORDS
 # ============================================================
 
 SENIOR_KEYWORDS = [
 
+    # ---------------- SENIOR ----------------
     "senior",
     "sr.",
     "sr ",
 
-    "lead ",
+    # ---------------- LEAD ----------------
+    "lead",
     "team lead",
     "tech lead",
+    "technical lead",
 
+    # ---------------- MANAGEMENT ----------------
     "manager",
+    "management",
     "managing",
-
     "director",
     "associate director",
+    "managing director",
 
+    # ---------------- HIGH-LEVEL IC ----------------
     "principal",
+    "staff",
+    "architect",
+    "specialist",
+    "expert",
 
-    "staff ",
-
+    # ---------------- LEADERSHIP ----------------
     "head of",
     "global head",
 
+    # ---------------- EXECUTIVE ----------------
     "vice president",
-    "vp ",
-
-    "chief ",
-
-    "architect",
-
     "president",
+    "executive director",
+    "chief",
+
+    # ---------------- BANKING SENIORITY ----------------
+    "assistant vice president",
+    "associate vice president",
+
+    # ---------------- EXPLICIT HIGHER LEVELS ----------------
+    "analyst ii",
+    "analyst iii",
+    "analyst iv",
+
+    "analyst 2",
+    "analyst 3",
+    "analyst 4",
+
+    "engineer ii",
+    "engineer iii",
+    "engineer iv",
+
+    "engineer 2",
+    "engineer 3",
+    "engineer 4",
+
+    "scientist ii",
+    "scientist iii",
+    "scientist iv",
+
+    "scientist 2",
+    "scientist 3",
+    "scientist 4",
+
+    # ---------------- GENERIC LEVELS ----------------
+    "level 2",
+    "level 3",
+    "level 4",
+
+    "level ii",
+    "level iii",
+    "level iv",
+]
+
+
+# ============================================================
+# SENIOR REGEX PATTERNS
+#
+# These catch short titles such as:
+# VP - Data Analytics
+# AVP, Business Analyst
+# SVP Analytics
+# MD - Analytics
+# ============================================================
+
+SENIOR_PATTERNS = [
+
+    r"\bvp\b",
+    r"\bavp\b",
+    r"\bsvp\b",
+    r"\bmd\b",
+
+    r"\bvice[\s-]+president\b",
+    r"\bassistant[\s-]+vice[\s-]+president\b",
+    r"\bassociate[\s-]+vice[\s-]+president\b",
+
+    r"\bmanaging[\s-]+director\b",
 ]
 
 
@@ -147,7 +210,26 @@ SENIOR_KEYWORDS = [
 
 UNRELATED_ROLE_KEYWORDS = [
 
-    # HR
+    # ---------------- FINANCE ----------------
+    "project finance analyst",
+    "finance analyst",
+    "financial analyst",
+    "investment analyst",
+    "investment banking",
+    "accounting analyst",
+    "tax analyst",
+
+    # ---------------- RISK ----------------
+    "risk analyst",
+    "climate risk",
+    "market risk",
+    "credit risk",
+
+    # ---------------- OPERATIONS ----------------
+    "operations analyst",
+    "business operations analyst",
+
+    # ---------------- HR ----------------
     "human resources",
     "hr business partner",
     "hrbp",
@@ -155,38 +237,38 @@ UNRELATED_ROLE_KEYWORDS = [
     "recruitment",
     "talent acquisition",
 
-    # Legal
+    # ---------------- LEGAL ----------------
     "legal counsel",
     "lawyer",
     "attorney",
     "paralegal",
 
-    # Sales
+    # ---------------- SALES ----------------
     "sales representative",
     "sales executive",
     "account executive",
     "business development manager",
 
-    # Creative
+    # ---------------- CREATIVE ----------------
     "copywriter",
     "graphic designer",
     "creative strategist",
     "content writer",
     "content creator",
 
-    # Medical
+    # ---------------- MEDICAL ----------------
     "doctor",
     "nurse",
     "physician",
     "pharmacist",
 
-    # Physical / Field
+    # ---------------- PHYSICAL / FIELD ----------------
     "driver",
     "warehouse worker",
     "security guard",
-    "technician",
+    "field technician",
 
-    # Software Development
+    # ---------------- SOFTWARE DEVELOPMENT ----------------
     "java developer",
     "java software engineer",
     "frontend developer",
@@ -199,7 +281,7 @@ UNRELATED_ROLE_KEYWORDS = [
     "android developer",
     "ios developer",
 
-    # IT Infrastructure
+    # ---------------- IT INFRASTRUCTURE ----------------
     "network engineer",
     "system administrator",
     "systems administrator",
@@ -266,14 +348,14 @@ INDIA_LOCATION_KEYWORDS = [
     "odisha",
     "punjab",
 
-    # Common office strings
+    # Common office locations
     "manyatha",
     "embassy business park",
 ]
 
 
 # ============================================================
-# TEXT NORMALIZER
+# NORMALIZE TEXT
 # ============================================================
 
 def normalize_text(value):
@@ -293,7 +375,7 @@ def normalize_text(value):
 
 
 # ============================================================
-# ROLE CHECK
+# TARGET ROLE CHECK
 # ============================================================
 
 def is_relevant_role(title):
@@ -310,7 +392,7 @@ def is_relevant_role(title):
 
 
 # ============================================================
-# SENIOR CHECK
+# SENIOR ROLE CHECK
 # ============================================================
 
 def is_senior_role(title):
@@ -320,14 +402,25 @@ def is_senior_role(title):
     if not title:
         return False
 
-    return any(
+    # Keyword check
+    if any(
         keyword in title
         for keyword in SENIOR_KEYWORDS
-    )
+    ):
+        return True
+
+    # Regex check
+    if any(
+        re.search(pattern, title)
+        for pattern in SENIOR_PATTERNS
+    ):
+        return True
+
+    return False
 
 
 # ============================================================
-# UNRELATED CHECK
+# UNRELATED ROLE CHECK
 # ============================================================
 
 def is_clearly_unrelated(title):
@@ -344,7 +437,7 @@ def is_clearly_unrelated(title):
 
 
 # ============================================================
-# STRICT INDIA LOCATION CHECK
+# INDIA LOCATION CHECK
 # ============================================================
 
 def check_location(location):
@@ -358,12 +451,11 @@ def check_location(location):
             "Location missing"
         )
 
-
     # Example:
-    # "2 Locations"
-    # "3 Locations"
+    # 2 Locations
+    # 3 Locations
     #
-    # India cannot be confirmed.
+    # Cannot confirm India.
 
     if re.fullmatch(
         r"\d+\s+locations?",
@@ -375,7 +467,6 @@ def check_location(location):
             "India location cannot be confirmed"
         )
 
-
     if any(
         keyword in location
         for keyword in INDIA_LOCATION_KEYWORDS
@@ -386,7 +477,6 @@ def check_location(location):
             "India location"
         )
 
-
     return (
         False,
         "Non-India or unverified location"
@@ -394,18 +484,14 @@ def check_location(location):
 
 
 # ============================================================
-# GET DATE FIELD FROM ATS
+# GET ATS POSTING DATE
 # ============================================================
 
 def get_job_posting_date(job):
 
     source = normalize_text(
-        job.get(
-            "source",
-            ""
-        )
+        job.get("source", "")
     )
-
 
     if source == "workday":
 
@@ -413,13 +499,11 @@ def get_job_posting_date(job):
             "posted_on"
         )
 
-
     if source == "greenhouse":
 
         return job.get(
             "updated_at"
         )
-
 
     if source == "lever":
 
@@ -427,22 +511,17 @@ def get_job_posting_date(job):
             "created_at"
         )
 
-
     if source == "ashby":
 
         return job.get(
             "published_at"
         )
 
-
     if source == "smartrecruiters":
 
         return job.get(
             "released_date"
         )
-
-
-    # Generic fallback
 
     return (
         job.get("posted_date")
@@ -455,7 +534,7 @@ def get_job_posting_date(job):
 
 
 # ============================================================
-# WORKDAY RELATIVE DATE CHECK
+# WORKDAY RELATIVE DATE
 # ============================================================
 
 def check_workday_relative_date(value):
@@ -463,13 +542,9 @@ def check_workday_relative_date(value):
     if not value:
         return None
 
-
     text = normalize_text(value)
 
-
-    # --------------------------------------------------------
-    # POSTED TODAY
-    # --------------------------------------------------------
+    # TODAY
 
     if text in (
         "posted today",
@@ -481,10 +556,7 @@ def check_workday_relative_date(value):
             "Workday: Posted Today"
         )
 
-
-    # --------------------------------------------------------
-    # POSTED YESTERDAY
-    # --------------------------------------------------------
+    # YESTERDAY
 
     if text in (
         "posted yesterday",
@@ -496,62 +568,18 @@ def check_workday_relative_date(value):
             "Workday: Posted Yesterday"
         )
 
-
-    # --------------------------------------------------------
-    # POSTED X DAYS AGO
-    # --------------------------------------------------------
-
-    match = re.search(
-        r"(?:posted\s+)?(\d+)\s+days?\s+ago",
-        text
-    )
-
-
-    if match:
-
-        days = int(
-            match.group(1)
-        )
-
-
-        # Strict 48-hour policy:
-        #
-        # 0 days = PASS
-        # 1 day  = PASS
-        #
-        # "2 Days Ago" could already be >48 hours,
-        # therefore reject.
-
-        if days <= 1:
-
-            return (
-                True,
-                f"Workday: Posted {days} day(s) ago"
-            )
-
-
-        return (
-            False,
-            f"Workday job is {days} days old"
-        )
-
-
-    # --------------------------------------------------------
-    # POSTED X HOURS AGO
-    # --------------------------------------------------------
+    # X HOURS AGO
 
     match = re.search(
         r"(?:posted\s+)?(\d+)\s+hours?\s+ago",
         text
     )
 
-
     if match:
 
         hours = int(
             match.group(1)
         )
-
 
         if hours <= MAX_JOB_AGE_HOURS:
 
@@ -560,12 +588,39 @@ def check_workday_relative_date(value):
                 f"Workday: Posted {hours} hours ago"
             )
 
-
         return (
             False,
             f"Workday job is {hours} hours old"
         )
 
+    # X DAYS AGO
+
+    match = re.search(
+        r"(?:posted\s+)?(\d+)\s+days?\s+ago",
+        text
+    )
+
+    if match:
+
+        days = int(
+            match.group(1)
+        )
+
+        # Strict policy:
+        # Today / Yesterday accepted.
+        # 2 Days Ago rejected because exact hour unknown.
+
+        if days <= 1:
+
+            return (
+                True,
+                f"Workday: Posted {days} day(s) ago"
+            )
+
+        return (
+            False,
+            f"Workday job is {days} days old"
+        )
 
     return None
 
@@ -579,7 +634,6 @@ def parse_job_date(value):
     if value is None:
         return None
 
-
     # --------------------------------------------------------
     # UNIX TIMESTAMP
     # --------------------------------------------------------
@@ -591,15 +645,9 @@ def parse_job_date(value):
 
         timestamp = float(value)
 
-
-        # Milliseconds
-
         if timestamp > 10_000_000_000:
 
-            timestamp = (
-                timestamp / 1000
-            )
-
+            timestamp /= 1000
 
         try:
 
@@ -616,13 +664,10 @@ def parse_job_date(value):
 
             return None
 
-
     value = str(value).strip()
-
 
     if not value:
         return None
-
 
     # --------------------------------------------------------
     # NUMERIC TIMESTAMP STRING
@@ -637,13 +682,9 @@ def parse_job_date(value):
 
             timestamp = float(value)
 
-
             if timestamp > 10_000_000_000:
 
-                timestamp = (
-                    timestamp / 1000
-                )
-
+                timestamp /= 1000
 
             return datetime.fromtimestamp(
                 timestamp,
@@ -658,13 +699,11 @@ def parse_job_date(value):
 
             return None
 
-
     # --------------------------------------------------------
     # ISO FORMAT
     # --------------------------------------------------------
 
     iso_value = value
-
 
     if iso_value.endswith("Z"):
 
@@ -673,20 +712,17 @@ def parse_job_date(value):
             + "+00:00"
         )
 
-
     try:
 
         parsed = datetime.fromisoformat(
             iso_value
         )
 
-
         if parsed.tzinfo is None:
 
             parsed = parsed.replace(
                 tzinfo=timezone.utc
             )
-
 
         return parsed.astimezone(
             timezone.utc
@@ -695,7 +731,6 @@ def parse_job_date(value):
     except ValueError:
 
         pass
-
 
     # --------------------------------------------------------
     # FALLBACK FORMATS
@@ -716,7 +751,6 @@ def parse_job_date(value):
         "%d/%m/%Y",
     ]
 
-
     for date_format in formats:
 
         try:
@@ -726,7 +760,6 @@ def parse_job_date(value):
                 date_format
             )
 
-
             return parsed.replace(
                 tzinfo=timezone.utc
             )
@@ -734,7 +767,6 @@ def parse_job_date(value):
         except ValueError:
 
             continue
-
 
     return None
 
@@ -746,21 +778,14 @@ def parse_job_date(value):
 def check_job_age(job):
 
     source = normalize_text(
-        job.get(
-            "source",
-            ""
-        )
+        job.get("source", "")
     )
-
 
     raw_date = get_job_posting_date(
         job
     )
 
-
-    # --------------------------------------------------------
-    # DATE MUST EXIST
-    # --------------------------------------------------------
+    # DATE REQUIRED
 
     if raw_date is None:
 
@@ -769,7 +794,6 @@ def check_job_age(job):
             "Posting date missing"
         )
 
-
     if str(raw_date).strip() == "":
 
         return (
@@ -777,10 +801,7 @@ def check_job_age(job):
             "Posting date missing"
         )
 
-
-    # --------------------------------------------------------
     # WORKDAY RELATIVE DATE
-    # --------------------------------------------------------
 
     if source == "workday":
 
@@ -790,20 +811,15 @@ def check_job_age(job):
             )
         )
 
-
         if relative_result is not None:
 
             return relative_result
 
-
-    # --------------------------------------------------------
-    # NORMAL TIMESTAMP / ISO DATE
-    # --------------------------------------------------------
+    # NORMAL DATE
 
     posted_at = parse_job_date(
         raw_date
     )
-
 
     if posted_at is None:
 
@@ -812,20 +828,15 @@ def check_job_age(job):
             f"Invalid/unparseable posting date: {raw_date}"
         )
 
-
     now = datetime.now(
         timezone.utc
     )
-
 
     age = (
         now - posted_at
     )
 
-
-    # --------------------------------------------------------
     # FUTURE DATE PROTECTION
-    # --------------------------------------------------------
 
     if age < timedelta(
         hours=-6
@@ -836,16 +847,12 @@ def check_job_age(job):
             "Posting date unexpectedly in future"
         )
 
-
     age_hours = max(
         0,
         age.total_seconds() / 3600
     )
 
-
-    # --------------------------------------------------------
-    # STRICT MAXIMUM 48 HOURS
-    # --------------------------------------------------------
+    # STRICT 48 HOURS
 
     if age_hours > MAX_JOB_AGE_HOURS:
 
@@ -853,7 +860,6 @@ def check_job_age(job):
             False,
             f"Job is {age_hours:.1f} hours old"
         )
-
 
     return (
         True,
@@ -874,16 +880,14 @@ def basic_job_filter(job):
         )
     )
 
-
     location = job.get(
         "location",
         ""
     )
 
-
-    # ========================================================
+    # --------------------------------------------------------
     # 1. TITLE REQUIRED
-    # ========================================================
+    # --------------------------------------------------------
 
     if not title:
 
@@ -892,10 +896,9 @@ def basic_job_filter(job):
             "Rejected: Missing job title"
         )
 
-
-    # ========================================================
-    # 2. STRICT 48-HOUR CHECK
-    # ========================================================
+    # --------------------------------------------------------
+    # 2. DATE - LAST 48 HOURS ONLY
+    # --------------------------------------------------------
 
     (
         age_passed,
@@ -904,7 +907,6 @@ def basic_job_filter(job):
         job
     )
 
-
     if not age_passed:
 
         return (
@@ -912,10 +914,9 @@ def basic_job_filter(job):
             f"Rejected: {age_reason}"
         )
 
-
-    # ========================================================
-    # 3. SENIOR ROLE CHECK
-    # ========================================================
+    # --------------------------------------------------------
+    # 3. SENIOR ROLE - STRICT REJECTION
+    # --------------------------------------------------------
 
     if is_senior_role(
         title
@@ -923,27 +924,12 @@ def basic_job_filter(job):
 
         return (
             False,
-            "Rejected: Senior/Lead/Manager level role"
+            "Rejected: Senior/non-entry-level title"
         )
 
-
-    # ========================================================
-    # 4. TARGET ROLE CHECK
-    # ========================================================
-
-    if not is_relevant_role(
-        title
-    ):
-
-        return (
-            False,
-            "Rejected: Not a target data/analytics role"
-        )
-
-
-    # ========================================================
-    # 5. UNRELATED ROLE CHECK
-    # ========================================================
+    # --------------------------------------------------------
+    # 4. CLEARLY UNRELATED ROLE
+    # --------------------------------------------------------
 
     if is_clearly_unrelated(
         title
@@ -951,13 +937,25 @@ def basic_job_filter(job):
 
         return (
             False,
-            "Rejected: Clearly unrelated job role"
+            "Rejected: Unrelated role"
         )
 
+    # --------------------------------------------------------
+    # 5. TARGET ROLE
+    # --------------------------------------------------------
 
-    # ========================================================
-    # 6. INDIA LOCATION CHECK
-    # ========================================================
+    if not is_relevant_role(
+        title
+    ):
+
+        return (
+            False,
+            "Rejected: Not a target Data/Analytics role"
+        )
+
+    # --------------------------------------------------------
+    # 6. INDIA LOCATION
+    # --------------------------------------------------------
 
     (
         location_passed,
@@ -966,7 +964,6 @@ def basic_job_filter(job):
         location
     )
 
-
     if not location_passed:
 
         return (
@@ -974,10 +971,9 @@ def basic_job_filter(job):
             f"Rejected: {location_reason}"
         )
 
-
-    # ========================================================
+    # --------------------------------------------------------
     # PASS
-    # ========================================================
+    # --------------------------------------------------------
 
     return (
         True,
@@ -999,190 +995,141 @@ if __name__ == "__main__":
         timezone.utc
     )
 
-
     test_jobs = [
 
-        # ----------------------------------------------------
-        # WORKDAY TODAY
-        # ----------------------------------------------------
+        # SHOULD PASS
 
         {
-            "source":
-                "workday",
-
-            "title":
-                "Data Analyst",
-
-            "location":
-                "Bangalore, India",
-
-            "posted_on":
-                "Posted Today"
+            "source": "workday",
+            "title": "Data Analyst",
+            "location": "Bangalore, India",
+            "posted_on": "Posted Today"
         },
 
-
-        # ----------------------------------------------------
-        # WORKDAY YESTERDAY
-        # ----------------------------------------------------
-
         {
-            "source":
-                "workday",
-
-            "title":
-                "Data Analyst",
-
-            "location":
-                "Hyderabad, India",
-
-            "posted_on":
-                "Posted Yesterday"
+            "source": "workday",
+            "title": "Business Analyst",
+            "location": "Hyderabad, India",
+            "posted_on": "Posted Yesterday"
         },
 
-
-        # ----------------------------------------------------
-        # WORKDAY 2 DAYS AGO - STRICT REJECT
-        # ----------------------------------------------------
-
         {
-            "source":
-                "workday",
-
-            "title":
-                "Data Analyst",
-
-            "location":
-                "Pune, India",
-
-            "posted_on":
-                "Posted 2 Days Ago"
-        },
-
-
-        # ----------------------------------------------------
-        # LEVER 12 HOURS
-        # ----------------------------------------------------
-
-        {
-            "source":
-                "lever",
-
-            "title":
-                "Data Analyst",
-
-            "location":
-                "Bangalore, India",
-
-            "created_at":
-                int(
-                    (
-                        now
-                        - timedelta(hours=12)
-                    ).timestamp()
-                    * 1000
-                )
-        },
-
-
-        # ----------------------------------------------------
-        # ASHBY 30 HOURS
-        # ----------------------------------------------------
-
-        {
-            "source":
-                "ashby",
-
-            "title":
-                "Business Intelligence Analyst",
-
-            "location":
-                "Bangalore, India",
-
-            "published_at":
+            "source": "lever",
+            "title": "Junior Data Engineer",
+            "location": "Bengaluru, India",
+            "created_at": int(
                 (
-                    now
-                    - timedelta(hours=30)
-                ).isoformat()
+                    now - timedelta(hours=12)
+                ).timestamp() * 1000
+            )
         },
 
-
-        # ----------------------------------------------------
-        # SMARTRECRUITERS 60 HOURS - REJECT
-        # ----------------------------------------------------
-
         {
-            "source":
-                "smartrecruiters",
-
-            "title":
-                "Data Analyst",
-
-            "location":
-                "Bangalore, India",
-
-            "released_date":
-                (
-                    now
-                    - timedelta(hours=60)
-                ).isoformat()
+            "source": "ashby",
+            "title": "Business Intelligence Analyst",
+            "location": "Bangalore, India",
+            "published_at": (
+                now - timedelta(hours=20)
+            ).isoformat()
         },
 
-
-        # ----------------------------------------------------
-        # FOREIGN JOB - REJECT
-        # ----------------------------------------------------
+        # SHOULD REJECT - SENIOR
 
         {
-            "source":
-                "greenhouse",
-
-            "title":
-                "Data Analyst",
-
-            "location":
-                "Tokyo, Japan",
-
-            "updated_at":
-                (
-                    now
-                    - timedelta(hours=5)
-                ).isoformat()
+            "source": "workday",
+            "title": "Senior Data Analyst",
+            "location": "Bangalore, India",
+            "posted_on": "Posted Today"
         },
 
-
-        # ----------------------------------------------------
-        # SENIOR JOB - REJECT
-        # ----------------------------------------------------
+        {
+            "source": "workday",
+            "title": "Lead Data Engineer",
+            "location": "Pune, India",
+            "posted_on": "Posted Today"
+        },
 
         {
-            "source":
-                "workday",
+            "source": "workday",
+            "title": "Data Engineer 3",
+            "location": "Bangalore, India",
+            "posted_on": "Posted Today"
+        },
 
-            "title":
-                "Senior Data Analyst",
+        {
+            "source": "workday",
+            "title": "Data Scientist - Specialist",
+            "location": "Pune, India",
+            "posted_on": "Posted Today"
+        },
 
-            "location":
-                "Bangalore, India",
+        {
+            "source": "workday",
+            "title": "VP Data Analytics",
+            "location": "Mumbai, India",
+            "posted_on": "Posted Today"
+        },
 
-            "posted_on":
-                "Posted Today"
+        {
+            "source": "workday",
+            "title": "Data Analytics & Management, MD",
+            "location": "Bangalore, India",
+            "posted_on": "Posted Today"
+        },
+
+        # SHOULD REJECT - IRRELEVANT
+
+        {
+            "source": "workday",
+            "title": "Project Finance Analyst",
+            "location": "Mumbai, India",
+            "posted_on": "Posted Today"
+        },
+
+        {
+            "source": "workday",
+            "title": "Climate Risk Analyst",
+            "location": "Mumbai, India",
+            "posted_on": "Posted Today"
+        },
+
+        {
+            "source": "workday",
+            "title": "Operations Analyst",
+            "location": "Jaipur, India",
+            "posted_on": "Posted Today"
+        },
+
+        # SHOULD REJECT - OLD
+
+        {
+            "source": "workday",
+            "title": "Data Analyst",
+            "location": "Pune, India",
+            "posted_on": "Posted 2 Days Ago"
+        },
+
+        # SHOULD REJECT - FOREIGN
+
+        {
+            "source": "greenhouse",
+            "title": "Data Analyst",
+            "location": "Tokyo, Japan",
+            "updated_at": (
+                now - timedelta(hours=5)
+            ).isoformat()
         },
     ]
 
-
     print(
-        "\nSTRICT FRESH-JOB FILTER TEST\n"
+        "\nFINAL STRICT FRESHER FILTER TEST\n"
     )
-
 
     for job in test_jobs:
 
-        passed, reason = (
-            basic_job_filter(
-                job
-            )
+        passed, reason = basic_job_filter(
+            job
         )
-
 
         result = (
             "PASS"
@@ -1190,11 +1137,8 @@ if __name__ == "__main__":
             else "REJECT"
         )
 
-
         print(
             f"{result:6} | "
-            f"{job['source']:16} | "
             f"{job['title']} | "
-            f"{job['location']} | "
             f"{reason}"
         )

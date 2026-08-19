@@ -20,7 +20,7 @@ RESUME_PATH = os.path.join(
 )
 RESUME_TEXT_PATH = "resume_text.txt"
 
-# User requirement: DO NOT lower this.
+# User requirement: Only ≥80% matches are relevant enough to alert
 MIN_MATCH_SCORE = 80
 
 # Prevent 1-2 detected skills from creating fake 100% matches.

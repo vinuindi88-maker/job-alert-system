@@ -3,7 +3,7 @@
 #
 # PURPOSE:
 # - India jobs only
-# - Posted within last 48 hours only
+# - Posted within configured freshness window (see settings.py)
 # - Data / Analytics target roles only
 # - Reject obvious unrelated roles
 # - Reject senior / lead / management / higher-level roles
@@ -15,12 +15,7 @@
 import re
 from datetime import datetime, timezone, timedelta
 
-
-# ============================================================
-# SETTINGS
-# ============================================================
-
-MAX_JOB_AGE_HOURS = 48
+from config.settings import MAX_JOB_AGE_HOURS
 
 
 # ============================================================
@@ -91,9 +86,37 @@ RELEVANT_ROLE_KEYWORDS = [
     "inventory analyst",
     "procurement analyst",
 
+    # ---------------- OPERATIONS ANALYTICS ----------------
+    "operations analyst",
+    "operations analytics",
+
     # ---------------- PERFORMANCE / DECISION ----------------
     "performance analyst",
     "decision support",
+
+    # ---------------- INTERNSHIPS / TRAINEE ----------------
+    "data analyst intern",
+    "data analyst internship",
+    "data analytics intern",
+    "data analytics internship",
+    "data science intern",
+    "data science internship",
+    "business analyst intern",
+    "business analyst internship",
+    "analytics intern",
+    "analytics internship",
+    "bi intern",
+    "bi internship",
+    "data engineering intern",
+    "data engineering internship",
+    "data intern",
+    "data internship",
+    "research intern",
+    "research internship",
+    "ml intern",
+    "ml internship",
+    "machine learning intern",
+    "machine learning internship",
 ]
 
 
@@ -124,10 +147,10 @@ SENIOR_KEYWORDS = [
 
     # ---------------- HIGH-LEVEL IC ----------------
     "principal",
-    "staff",
     "architect",
-    "specialist",
     "expert",
+    "staff",
+    "specialist",
 
     # ---------------- LEADERSHIP ----------------
     "head of",
@@ -224,10 +247,6 @@ UNRELATED_ROLE_KEYWORDS = [
     "climate risk",
     "market risk",
     "credit risk",
-
-    # ---------------- OPERATIONS ----------------
-    "operations analyst",
-    "business operations analyst",
 
     # ---------------- HR ----------------
     "human resources",
@@ -374,6 +393,30 @@ def normalize_text(value):
     return value
 
 
+def keyword_in_text(keyword, text):
+
+    keyword = keyword.strip()
+
+    if not keyword or not text:
+        return False
+
+    if re.search(r"\s", keyword) or "-" in keyword:
+        return keyword in text
+
+    pattern = (
+        r"(?<!\w)"
+        + re.escape(keyword)
+        + r"(?!\w)"
+    )
+
+    return bool(
+        re.search(
+            pattern,
+            text
+        )
+    )
+
+
 # ============================================================
 # TARGET ROLE CHECK
 # ============================================================
@@ -404,7 +447,7 @@ def is_senior_role(title):
 
     # Keyword check
     if any(
-        keyword in title
+        keyword_in_text(keyword, title)
         for keyword in SENIOR_KEYWORDS
     ):
         return True
@@ -437,14 +480,122 @@ def is_clearly_unrelated(title):
 
 
 # ============================================================
-# INDIA LOCATION CHECK
+# REMOTE / WFH KEYWORDS
 # ============================================================
 
-def check_location(location):
+REMOTE_KEYWORDS = [
+    "remote",
+    "work from home",
+    "wfh",
+    "work from anywhere",
+    "fully remote",
+    "telecommute",
+    "telecommuting",
+    "virtual",
+    "home based",
+    "home-based",
+    "distributed",
+]
+
+
+# ============================================================
+# REMOTE / WFH CHECK
+# ============================================================
+
+def is_remote_or_wfh(location):
 
     location = normalize_text(location)
 
     if not location:
+        return False
+
+    return any(
+        keyword in location
+        for keyword in REMOTE_KEYWORDS
+    )
+
+
+# ============================================================
+# INDIA LOCATION CHECK
+# ============================================================
+
+def is_india_location(location):
+
+    location = normalize_text(location)
+
+    if not location:
+        return False
+
+    return any(
+        keyword in location
+        for keyword in INDIA_LOCATION_KEYWORDS
+    )
+
+
+# ============================================================
+# INTERN TITLE DETECTION
+# ============================================================
+
+INTERN_TITLE_KEYWORDS = [
+    "intern",
+    "internship",
+    "trainee",
+    "apprentice",
+    "apprenticeship",
+]
+
+
+def is_intern_title(title):
+
+    title = normalize_text(title)
+
+    if not title:
+        return False
+
+    return any(
+        keyword_in_text(keyword, title)
+        for keyword in INTERN_TITLE_KEYWORDS
+    )
+
+
+# ============================================================
+# BANGALORE LOCATION CHECK
+# ============================================================
+
+BANGALORE_KEYWORDS = [
+    "bangalore",
+    "bengaluru",
+]
+
+
+def is_bangalore_location(location):
+
+    location = normalize_text(location)
+
+    if not location:
+        return False
+
+    return any(
+        keyword in location
+        for keyword in BANGALORE_KEYWORDS
+    )
+
+
+# ============================================================
+# SMART LOCATION CHECK
+#
+# RULES:
+# - India jobs: Accept all modes (onsite/hybrid/remote)
+# - Foreign jobs: Accept ONLY if remote / work-from-home
+# - Intern jobs: Deferred (accept now, check paid/unpaid later)
+# - Missing location: Reject
+# ============================================================
+
+def check_location(location, title=""):
+
+    location_text = normalize_text(location)
+
+    if not location_text:
 
         return (
             False,
@@ -455,31 +606,49 @@ def check_location(location):
     # 2 Locations
     # 3 Locations
     #
-    # Cannot confirm India.
+    # Cannot confirm India or remote.
 
     if re.fullmatch(
         r"\d+\s+locations?",
-        location
+        location_text
     ):
 
         return (
             False,
-            "India location cannot be confirmed"
+            "Location cannot be confirmed"
         )
 
-    if any(
-        keyword in location
-        for keyword in INDIA_LOCATION_KEYWORDS
-    ):
+    # INTERN: Defer location check to after JD fetch
+    # (paid/unpaid determines which locations are OK)
+
+    if is_intern_title(title):
 
         return (
             True,
-            "India location"
+            "Intern role (location check deferred to JD)"
+        )
+
+    # INDIA: Accept all modes (onsite / hybrid / remote)
+
+    if is_india_location(location):
+
+        return (
+            True,
+            "India location (all modes accepted)"
+        )
+
+    # FOREIGN: Accept only if remote / WFH
+
+    if is_remote_or_wfh(location):
+
+        return (
+            True,
+            "Foreign remote/WFH (accepted)"
         )
 
     return (
         False,
-        "Non-India or unverified location"
+        "Foreign non-remote location (rejected)"
     )
 
 
@@ -501,8 +670,10 @@ def get_job_posting_date(job):
 
     if source == "greenhouse":
 
-        return job.get(
-            "updated_at"
+        return (
+            job.get("posted_date")
+            or job.get("first_published")
+            or job.get("updated_at")
         )
 
     if source == "lever":
@@ -606,11 +777,9 @@ def check_workday_relative_date(value):
             match.group(1)
         )
 
-        # Strict policy:
-        # Today / Yesterday accepted.
-        # 2 Days Ago rejected because exact hour unknown.
+        max_days = MAX_JOB_AGE_HOURS / 24
 
-        if days <= 1:
+        if days <= max_days:
 
             return (
                 True,
@@ -772,7 +941,7 @@ def parse_job_date(value):
 
 
 # ============================================================
-# STRICT 48-HOUR CHECK
+# STRICT FRESHNESS CHECK
 # ============================================================
 
 def check_job_age(job):
@@ -785,23 +954,19 @@ def check_job_age(job):
         job
     )
 
-    # DATE REQUIRED
-
-    if raw_date is None:
-
-        return (
-            False,
-            "Posting date missing"
-        )
-
-    if str(raw_date).strip() == "":
+    # If date is completely missing, allow it through
+    if raw_date is None or str(raw_date).strip() == "":
 
         return (
-            False,
-            "Posting date missing"
+            True,
+            "Posting date unavailable (allowed)"
         )
 
     # WORKDAY RELATIVE DATE
+
+    source = normalize_text(
+        job.get("source", "")
+    )
 
     if source == "workday":
 
@@ -823,9 +988,16 @@ def check_job_age(job):
 
     if posted_at is None:
 
+        text = str(raw_date).lower()
+        if any(k in text for k in ["30+", "30 days", "15 days", "10 days", "month", "weeks", "older"]):
+            return (
+                False,
+                f"Rejected: Job posting is too old: {raw_date}"
+            )
+
         return (
-            False,
-            f"Invalid/unparseable posting date: {raw_date}"
+            True,
+            f"Unparseable posting date (allowed): {raw_date}"
         )
 
     now = datetime.now(
@@ -852,7 +1024,7 @@ def check_job_age(job):
         age.total_seconds() / 3600
     )
 
-    # STRICT 48 HOURS
+    # FRESHNESS WINDOW
 
     if age_hours > MAX_JOB_AGE_HOURS:
 
@@ -897,7 +1069,7 @@ def basic_job_filter(job):
         )
 
     # --------------------------------------------------------
-    # 2. DATE - LAST 48 HOURS ONLY
+    # DATE - FRESHNESS WINDOW
     # --------------------------------------------------------
 
     (
@@ -954,14 +1126,15 @@ def basic_job_filter(job):
         )
 
     # --------------------------------------------------------
-    # 6. INDIA LOCATION
+    # 6. LOCATION CHECK
     # --------------------------------------------------------
 
     (
         location_passed,
         location_reason
     ) = check_location(
-        location
+        location,
+        title
     )
 
     if not location_passed:
@@ -1065,6 +1238,13 @@ if __name__ == "__main__":
 
         {
             "source": "workday",
+            "title": "Operations Analyst",
+            "location": "Jaipur, India",
+            "posted_on": "Posted Today"
+        },
+
+        {
+            "source": "workday",
             "title": "VP Data Analytics",
             "location": "Mumbai, India",
             "posted_on": "Posted Today"
@@ -1090,13 +1270,6 @@ if __name__ == "__main__":
             "source": "workday",
             "title": "Climate Risk Analyst",
             "location": "Mumbai, India",
-            "posted_on": "Posted Today"
-        },
-
-        {
-            "source": "workday",
-            "title": "Operations Analyst",
-            "location": "Jaipur, India",
             "posted_on": "Posted Today"
         },
 

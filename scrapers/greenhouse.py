@@ -325,7 +325,24 @@ def fetch_greenhouse_jobs(
 
                 "job_id": job_id,
 
+                "posted_date": (
+                    posting.get(
+                        "first_published"
+                    )
+                    or posting.get(
+                        "updated_at"
+                    )
+                    or ""
+                ),
+
                 # Useful metadata
+                "first_published": (
+                    posting.get(
+                        "first_published"
+                    )
+                    or ""
+                ),
+
                 "updated_at": (
                     posting.get(
                         "updated_at"

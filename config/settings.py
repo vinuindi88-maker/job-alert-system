@@ -80,7 +80,7 @@ ALLOWED_EMPLOYMENT_TYPES = [
     "Permanent",
 ]
 
-# Job freshness
+# Job freshness (48 hours – last 2 days of postings)
 MAX_JOB_AGE_HOURS = 48
 
 # Email only new jobs

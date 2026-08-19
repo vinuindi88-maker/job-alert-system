@@ -2,31 +2,63 @@ import re
 
 
 # ============================================================
-# EXPERIENCE FILTER
-# Accept jobs suitable for 0–2 years experience
+# STRICT EXPERIENCE FILTER
+#
+# ALLOWED:
+# - Fresher / entry-level wording
+# - Internship / trainee (word-boundary match)
+# - 0-1 years, 0-2 years
+# - Up to 1 year stated alone
+# - Experience not stated
+#
+# REJECT:
+# - 1-2 years, 2 years, 2+ years, 3+ years, etc.
 # ============================================================
 
-MAX_ALLOWED_EXPERIENCE = 2
+MAX_ALLOWED_EXPERIENCE_YEARS = 2
 
+
+# ============================================================
+# FRESHER KEYWORDS
+# ============================================================
 
 FRESHER_KEYWORDS = [
     "fresher",
     "freshers",
     "entry level",
     "entry-level",
-    "graduate",
     "new graduate",
     "recent graduate",
     "fresh graduate",
     "no experience required",
     "no prior experience required",
-    "0 years experience",
-    "0 year experience",
 ]
 
 
+# ============================================================
+# INTERNSHIP PATTERNS (word boundaries)
+# ============================================================
+
+INTERNSHIP_PATTERNS = [
+    r"\binternship\b",
+    r"\binterns\b",
+    r"\bintern\b",
+    r"\btrainee\b",
+    r"\bapprentice\b",
+    r"\bapprenticeship\b",
+    r"\bpaid internship\b",
+    r"\bunpaid internship\b",
+    r"\bsummer intern\b",
+    r"\bstudent intern\b",
+    r"\bgraduate intern\b",
+]
+
+
+# ============================================================
+# FRESHER CHECK
+# ============================================================
+
 def contains_fresher_keyword(text):
-    """Detect explicit fresher / graduate opportunities."""
 
     text = text.lower()
 
@@ -36,97 +68,132 @@ def contains_fresher_keyword(text):
     )
 
 
-def extract_experience_ranges(text):
-    """
-    Extract experience requirements from job description.
+# ============================================================
+# INTERNSHIP CHECK
+# ============================================================
 
-    Examples detected:
-    0-2 years
-    1 - 2 years
-    2-4 years
-    3 to 5 years
-    """
+def contains_internship_keyword(text):
+
+    text = text.lower()
+
+    return any(
+        re.search(pattern, text)
+        for pattern in INTERNSHIP_PATTERNS
+    )
+
+
+# ============================================================
+# EXPERIENCE RANGE CHECK
+# ============================================================
+
+def extract_experience_ranges(text):
 
     text = text.lower()
 
     pattern = (
-        r"(\d+(?:\.\d+)?)\s*"
+        r"\b(\d+(?:\.\d+)?)\s*"
         r"(?:-|–|—|to)\s*"
         r"(\d+(?:\.\d+)?)\s*"
-        r"(?:years?|yrs?)"
+        r"(?:years?|yrs?)\b"
     )
 
-    matches = re.findall(pattern, text)
+    matches = re.findall(
+        pattern,
+        text
+    )
 
     return [
-        (float(min_years), float(max_years))
+        (
+            float(min_years),
+            float(max_years)
+        )
         for min_years, max_years in matches
     ]
 
 
-def extract_minimum_experience(text):
-    """
-    Detect requirements such as:
+# ============================================================
+# MINIMUM / PLUS EXPERIENCE
+# ============================================================
 
-    1+ years
-    2+ years
-    minimum 2 years
-    at least 2 years
-    3 years of experience
-    """
+def extract_minimum_experience(text):
 
     text = text.lower()
 
     patterns = [
-        r"(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)",
-        r"minimum\s+(?:of\s+)?(\d+(?:\.\d+)?)\s*(?:years?|yrs?)",
-        r"at\s+least\s+(\d+(?:\.\d+)?)\s*(?:years?|yrs?)",
-        r"minimum\s+(\d+(?:\.\d+)?)\s*(?:years?|yrs?)",
-        r"(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s+of\s+(?:relevant\s+)?experience",
+
+        r"\b(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)\b",
+
+        r"\bminimum\s+(?:of\s+)?(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\b",
+
+        r"\bat\s+least\s+(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\b",
+
+        r"\b(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s+of\s+experience\b",
+
+        r"\b(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\s+experience\b",
     ]
 
     values = []
 
     for pattern in patterns:
 
-        matches = re.findall(pattern, text)
+        matches = re.findall(
+            pattern,
+            text
+        )
 
         for match in matches:
 
             try:
-                values.append(float(match))
+                values.append(
+                    float(match)
+                )
+
             except ValueError:
                 pass
 
     return values
 
 
+# ============================================================
+# MAIN EXPERIENCE CHECK
+# ============================================================
+
 def check_experience(job_description):
-    """
-    Main experience decision.
-
-    Returns:
-
-    True  -> suitable for 0–2 years
-    False -> requires more than 2 years
-    """
 
     if not job_description:
-        return True, "Experience not specified"
+
+        return (
+            False,
+            "Rejected: Experience requirement missing"
+        )
 
     text = job_description.lower()
 
-    # --------------------------------------------------------
-    # 1. Explicit fresher wording
-    # --------------------------------------------------------
+    # ========================================================
+    # 1. INTERNSHIP
+    # ========================================================
+
+    if contains_internship_keyword(text):
+
+        return (
+            True,
+            "Internship / Trainee opportunity"
+        )
+
+    # ========================================================
+    # 2. FRESHER
+    # ========================================================
 
     if contains_fresher_keyword(text):
 
-        return True, "Fresher / Entry-level job"
+        return (
+            True,
+            "Fresher / Entry-level job"
+        )
 
-    # --------------------------------------------------------
-    # 2. Experience ranges
-    # --------------------------------------------------------
+    # ========================================================
+    # 3. EXPERIENCE RANGES
+    # ========================================================
 
     ranges = extract_experience_ranges(text)
 
@@ -134,42 +201,94 @@ def check_experience(job_description):
 
         for min_years, max_years in ranges:
 
-            # Candidate can enter if minimum requirement <= 2
-            if min_years <= MAX_ALLOWED_EXPERIENCE:
+            if (
+                min_years == 0
+                and max_years <= MAX_ALLOWED_EXPERIENCE_YEARS
+            ):
+
                 return (
                     True,
-                    f"Experience requirement: {min_years:g}-{max_years:g} years"
+                    f"Experience requirement: "
+                    f"{min_years:g}-{max_years:g} years"
                 )
 
-        return False, "Experience requirement exceeds 2 years"
+            return (
+                False,
+                f"Rejected: Experience requirement "
+                f"{min_years:g}-{max_years:g} years"
+            )
 
-    # --------------------------------------------------------
-    # 3. Minimum experience requirements
-    # --------------------------------------------------------
+    # ========================================================
+    # 4. MINIMUM / PLUS / EXACT EXPERIENCE
+    #
+    # STRICT RULE:
+    # Reject any standalone mention of >= 1 year
+    # Only 0-1 and 0-2 RANGES are acceptable (checked above)
+    # ========================================================
 
     minimum_values = extract_minimum_experience(text)
 
     if minimum_values:
 
-        minimum_required = min(minimum_values)
+        lowest = min(
+            minimum_values
+        )
 
-        if minimum_required <= MAX_ALLOWED_EXPERIENCE:
+        if lowest >= 1:
 
             return (
-                True,
-                f"Minimum experience: {minimum_required:g} years"
+                False,
+                f"Rejected: Requires "
+                f"{lowest:g}+ years experience"
             )
+
+        # Only 0 years standalone is acceptable
+
+        return (
+            True,
+            f"Experience requirement: "
+            f"{lowest:g} years (acceptable)"
+        )
+
+    # ========================================================
+    # 5. EXPLICIT 0 YEARS
+    # ========================================================
+
+    if re.search(
+        r"\b0\s*(?:years?|yrs?)\b",
+        text
+    ):
+
+        return (
+            True,
+            "0 years experience"
+        )
+
+    # ========================================================
+    # 6. EXPLICIT 1 YEAR - REJECTED
+    #
+    # Standalone "1 year" means minimum 1 year required.
+    # User wants only 0-start ranges.
+    # ========================================================
+
+    if re.search(
+        r"\b1\s*(?:year|yr)\b",
+        text
+    ):
 
         return (
             False,
-            f"Requires minimum {minimum_required:g} years"
+            "Rejected: Requires 1 year experience"
         )
 
-    # --------------------------------------------------------
-    # 4. Experience not clearly specified
-    # --------------------------------------------------------
+    # ========================================================
+    # 7. UNKNOWN / UNSTATED EXPERIENCE
+    # ========================================================
 
-    return True, "Experience requirement not clearly specified"
+    return (
+        True,
+        "Experience requirement not stated (allowed through)"
+    )
 
 
 # ============================================================
@@ -180,31 +299,65 @@ if __name__ == "__main__":
 
     test_descriptions = [
 
+        # PASS
         "Fresh graduates are encouraged to apply.",
-
         "This is an entry-level Data Analyst position.",
-
+        "Candidates should have 0-1 years of experience.",
         "Candidates should have 0-2 years of experience.",
+        "Requires 1 year of experience in SQL.",
+        "Paid internship opportunity for Data Analysts.",
+        "Unpaid internship opportunity.",
+        "Data Analyst Intern position.",
+        "Data Analyst with SQL and Power BI skills.",
 
-        "Requires 1-2 years of experience in SQL.",
-
-        "Minimum 2 years of experience required.",
-
+        # REJECT
+        "Requires 1-2 years of experience.",
+        "Requires exactly 2 years of experience.",
+        "Requires 2 years of experience.",
         "Requires 2+ years of relevant experience.",
-
-        "Requires 3+ years of experience.",
-
+        "Candidates should have 2-5 years of experience.",
         "Candidates should have 3-5 years of experience.",
+        "Requires minimum 3 years of experience.",
+        "Requires 4 years of experience.",
+        "Looking for an experienced Data Analyst.",
 
-        "Looking for a Data Analyst with SQL and Power BI skills.",
+        # FALSE POSITIVE GUARDS
+        "International Data Analyst role with SQL skills.",
+        "Internal Audit reporting team needs an analyst.",
     ]
 
-    print("\nEXPERIENCE FILTER TEST\n")
+
+    print(
+        "\n"
+        "=========================================="
+    )
+
+    print(
+        "STRICT EXPERIENCE FILTER TEST"
+    )
+
+    print(
+        "=========================================="
+    )
+
 
     for description in test_descriptions:
 
-        passed, reason = check_experience(description)
+        passed, reason = check_experience(
+            description
+        )
 
-        status = "PASS" if passed else "REJECT"
+        status = (
+            "PASS"
+            if passed
+            else "REJECT"
+        )
 
-        print(f"{status:7} | {reason}")
+        print(
+            f"{status:7} | {reason}"
+        )
+
+
+    print(
+        "=========================================="
+    )

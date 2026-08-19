@@ -7,12 +7,7 @@ from scrapers.router import (
     fetch_job_details,
 )
 
-from config.filters import (
-    basic_job_filter,
-    is_intern_title,
-    is_remote_or_wfh,
-    is_bangalore_location,
-)
+from config.filters import basic_job_filter
 
 from matcher.experience_filter import check_experience
 
@@ -145,7 +140,7 @@ def process_job(job):
     # STEP 1 - STRICT BASIC FILTER
     #
     # Checks:
-    # - within freshness window (see settings.py)
+    # - <= 48 hours
     # - India
     # - relevant target role
     # - not senior
@@ -222,75 +217,6 @@ def process_job(job):
     print(
         "FULL JD: Loaded"
     )
-
-
-    # ========================================================
-    # STEP 2.5 - INTERN LOCATION CHECK
-    #
-    # Rules:
-    # - Unpaid intern: WFH or Bangalore only
-    # - Paid intern (or not stated): any location OK
-    # - Non-intern: skip this check
-    # ========================================================
-
-    job_title = job.get(
-        "title",
-        ""
-    )
-
-    if is_intern_title(job_title):
-
-        job_location = job.get(
-            "location",
-            ""
-        )
-
-        unpaid_keywords = [
-            "unpaid",
-            "no stipend",
-            "without stipend",
-            "without pay",
-            "non-paid",
-            "non paid",
-        ]
-
-        is_unpaid = any(
-            kw in description.lower()
-            for kw in unpaid_keywords
-        )
-
-        if is_unpaid:
-
-            location_ok = (
-                is_remote_or_wfh(job_location)
-                or is_bangalore_location(
-                    job_location
-                )
-            )
-
-            if not location_ok:
-
-                print(
-                    "REJECTED: Unpaid intern "
-                    "(only WFH or Bangalore)"
-                )
-
-                return {
-                    "status": "intern_location_rejected",
-                    "qualified": False
-                }
-
-            print(
-                "PASSED INTERN LOCATION: "
-                "Unpaid but WFH/Bangalore"
-            )
-
-        else:
-
-            print(
-                "PASSED INTERN LOCATION: "
-                "Paid intern (any location OK)"
-            )
 
 
     # ========================================================

@@ -589,7 +589,9 @@ def save_job(
     if match_result is None:
         match_result = {}
 
-    # Make sure job exists first.
+    if job_already_processed(job):
+
+        return False
 
     register_job(job)
 

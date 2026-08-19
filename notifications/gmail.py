@@ -53,7 +53,7 @@ def create_job_email(job, match_result):
     company = job.get("company", "Unknown Company")
     title = job.get("title", "Unknown Role")
     location = job.get("location", "Not specified")
-    job_url = job.get("job_url", "")
+    job_url = job.get("job_url") or job.get("url", "")
     posted_date = job.get("posted_date", "Not specified")
 
     match_score = match_result.get(
@@ -87,6 +87,38 @@ def create_job_email(job, match_result):
         if missing_skills
         else "None"
     )
+
+    # --------------------------------------------------------
+    # INTERNSHIP DETECTION
+    # --------------------------------------------------------
+
+    title_lower = title.lower()
+
+    is_internship = any(
+        kw in title_lower
+        for kw in [
+            "intern",
+            "internship",
+            "trainee",
+        ]
+    )
+
+    internship_badge = ""
+
+    if is_internship:
+        internship_badge = """
+        <p>
+            <span style="
+                display:inline-block;
+                padding:4px 12px;
+                background:#34a853;
+                color:white;
+                border-radius:4px;
+                font-size:12px;
+                font-weight:bold;
+            ">🎓 INTERNSHIP</span>
+        </p>
+        """
 
     apply_button = ""
 
@@ -131,6 +163,8 @@ def create_job_email(job, match_result):
             <h3>
                 {title}
             </h3>
+
+            {internship_badge}
 
             <p>
                 <strong>Company:</strong>
@@ -214,8 +248,20 @@ def send_job_alert(job, match_result):
         0
     )
 
+    title_lower = title.lower()
+
+    is_internship = any(
+        kw in title_lower
+        for kw in [
+            "intern",
+            "internship",
+            "trainee",
+        ]
+    )
+
     subject = (
-        f"Job Alert: {title} | "
+        f"{'🎓 Internship Alert' if is_internship else 'Job Alert'}: "
+        f"{title} | "
         f"{company} | "
         f"{score}% Match"
     )
